@@ -109,6 +109,7 @@ public class StartStopTrackingAction extends AnAction {
                     eyeTracker.setDeviceIndex(config.getEyeTrackerDevice());
                     eyeTracker.setPythonScriptTobii();
                     eyeTracker.setPythonScriptMouse();
+                    eyeTracker.setPythonScriptIMotions();
                     eyeTracker.startTracking(e.getProject());
                 }
                 AddLabelAction.setIsEnabled(true);

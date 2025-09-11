@@ -27,6 +27,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
 
 /**
@@ -65,6 +66,7 @@ public class EyeTracker implements Disposable {
     String pythonInterpreter = "";
     String pythonScriptTobii;
     String pythonScriptMouse;
+    String pythonScriptIMotions;
     int deviceIndex = 0;
     /**
      * This variable indicates whether the gaze coordinates are normalized to the screen size,
@@ -142,6 +144,7 @@ public class EyeTracker implements Disposable {
         this.sampleFrequency = sampleFrequency;
         setPythonScriptMouse();
         setPythonScriptTobii();
+        setPythonScriptIMotions();
     }
 
     /**
@@ -289,6 +292,8 @@ public class EyeTracker implements Disposable {
                 processBuilder = new ProcessBuilder(pythonInterpreter, "-c", pythonScriptMouse);
             } else if (deviceIndex == EYE_TRACKER_TOBII) {
                 processBuilder = new ProcessBuilder(pythonInterpreter, "-c", pythonScriptTobii);
+            } else if (deviceIndex == EYE_TRACKER_IMOTIONS) {
+                processBuilder = new ProcessBuilder(pythonInterpreter, "-c", pythonScriptIMotions);
             } else {
                 /* fallback */
                 processBuilder = new ProcessBuilder(pythonInterpreter, "-c", pythonScriptTobii);
@@ -507,6 +512,31 @@ public class EyeTracker implements Disposable {
                         last_time = current_time
                         sys.stdout.flush()
                 """;
+    }
+
+    /**
+     * This method sets the Python script for the iMotions Labs eye tracker.
+     * <p>
+     * You need to configure iMotions Lab to send iMotions Events API events.
+     * The plugin requires currently that the iMotions Events are set up
+     * to be sent via TCP, as JSON, using port 8088.
+     *
+     * @see <a href="https://imotions.com/products/imotions-lab/developers/api/">https://imotions.com/products/imotions-lab/developers/api/</a>
+     * and <a href="https://help.imotions.com/docs/imotions-api-programming-guide">https://help.imotions.com/docs/imotions-api-programming-guide</a>
+     */
+    public void setPythonScriptIMotions() {
+        pythonScriptIMotions = loadScript("/scripts/imotions_to_codegrits.py");
+    }
+
+    private String loadScript(String scriptPath) {
+        try (var in = EyeTracker.class.getResourceAsStream(scriptPath)) {
+            if (in == null) {
+                throw new IllegalStateException("Script file not found in resources: " + scriptPath);
+            }
+            return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load script from resources", e);
+        }
     }
 
     /**
