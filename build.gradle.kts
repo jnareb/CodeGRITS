@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "io.github.codegrits"
-version = "0.3.2-dev1"
+version = "0.3.2-dev2"
 
 repositories {
     mavenCentral()
