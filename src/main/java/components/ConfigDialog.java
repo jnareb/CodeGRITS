@@ -82,6 +82,7 @@ public class ConfigDialog extends DialogWrapper {
                     if (trackerName != null && !trackerName.equals("Not Found")) {
                         deviceCombo.removeAllItems();
                         deviceCombo.addItem("Mouse");
+                        deviceCombo.addItem("iMotions Events API");
                         deviceCombo.addItem(trackerName);
                         deviceCombo.setSelectedIndex(EyeTracker.EYE_TRACKER_TOBII);
                     }
@@ -93,6 +94,7 @@ public class ConfigDialog extends DialogWrapper {
                 } else { //use mouse and default freq
                     deviceCombo.removeAllItems();
                     deviceCombo.addItem("Mouse");
+                    deviceCombo.addItem("iMotions Events API");
                     deviceCombo.setSelectedIndex(EyeTracker.EYE_TRACKER_MOUSE);
                     freqCombo.removeAllItems();
                     freqCombo.addItem(30.0);
@@ -105,6 +107,7 @@ public class ConfigDialog extends DialogWrapper {
                 freqCombo.removeAllItems();
                 deviceCombo.removeAllItems();
                 deviceCombo.addItem("Mouse");
+                deviceCombo.addItem("iMotions Events API");
                 freqCombo.addItem(30.0);
                 freqCombo.addItem(60.0);
                 freqCombo.addItem(120.0);
@@ -374,6 +377,7 @@ public class ConfigDialog extends DialogWrapper {
                         if (trackerName != null && !trackerName.equals("Not Found")) {
                             deviceCombo.removeAllItems();
                             deviceCombo.addItem("Mouse");
+                            deviceCombo.addItem("iMotions Events API");
                             deviceCombo.addItem(trackerName);
                             deviceCombo.setSelectedIndex(EyeTracker.EYE_TRACKER_TOBII);
                         }
