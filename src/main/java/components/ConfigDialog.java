@@ -5,6 +5,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.*;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NotNull;
+import trackers.EyeTracker;
 import utils.AvailabilityChecker;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -82,7 +83,7 @@ public class ConfigDialog extends DialogWrapper {
                         deviceCombo.removeAllItems();
                         deviceCombo.addItem("Mouse");
                         deviceCombo.addItem(trackerName);
-                        deviceCombo.setSelectedIndex(1);
+                        deviceCombo.setSelectedIndex(EyeTracker.EYE_TRACKER_TOBII);
                     }
                     List<String> freqList = AvailabilityChecker.getFrequencies(getPythonInterpreter());
                     freqCombo.removeAllItems();
@@ -92,6 +93,7 @@ public class ConfigDialog extends DialogWrapper {
                 } else { //use mouse and default freq
                     deviceCombo.removeAllItems();
                     deviceCombo.addItem("Mouse");
+                    deviceCombo.setSelectedIndex(EyeTracker.EYE_TRACKER_MOUSE);
                     freqCombo.removeAllItems();
                     freqCombo.addItem(30.0);
                     freqCombo.addItem(60.0);
@@ -373,7 +375,7 @@ public class ConfigDialog extends DialogWrapper {
                             deviceCombo.removeAllItems();
                             deviceCombo.addItem("Mouse");
                             deviceCombo.addItem(trackerName);
-                            deviceCombo.setSelectedIndex(1);
+                            deviceCombo.setSelectedIndex(EyeTracker.EYE_TRACKER_TOBII);
                         }
                         List<String> freqList = AvailabilityChecker.getFrequencies(getPythonInterpreter());
                         freqCombo.removeAllItems();

@@ -34,6 +34,11 @@ import java.util.function.Consumer;
  * This class is the eye tracker.
  */
 public class EyeTracker implements Disposable {
+    /* NOTE: used instead of enum */
+    public static final int EYE_TRACKER_MOUSE = 0;
+    public static final int EYE_TRACKER_TOBII = 1;
+    public static final int EYE_TRACKER_IMOTIONS = 2; // currently unused
+
     String dataOutputPath = "";
     /**
      * This variable indicates the sample frequency of the eye tracker.
@@ -118,6 +123,9 @@ public class EyeTracker implements Disposable {
 
     /**
      * This is the constructor for the eye tracker.
+     * <p>
+     * TODO: Add support for iMotions Events API as eye tracker
+     *       (not added because this constructor is not used).
      *
      * @param pythonInterpreter The path of the Python interpreter.
      * @param sampleFrequency   The sample frequency of the eye tracker.
@@ -160,10 +168,12 @@ public class EyeTracker implements Disposable {
         if (virtualFiles.length > 0) {
             filePath = virtualFiles[0].getPath();
         }
-        if (deviceIndex == 0) {
+        if (deviceIndex == EYE_TRACKER_MOUSE) {
             setting.setAttribute("eye_tracker", "Mouse");
-        } else {
+        } else if (deviceIndex == EYE_TRACKER_TOBII) {
             setting.setAttribute("eye_tracker", "Tobii Pro Fusion");
+        } else if (deviceIndex == EYE_TRACKER_IMOTIONS) {
+            setting.setAttribute("eye_tracker", "iMotions Events API");
         }
         setting.setAttribute("sample_frequency", String.valueOf(sampleFrequency));
         track();
@@ -280,9 +290,12 @@ public class EyeTracker implements Disposable {
     public void track() {
         try {
             ProcessBuilder processBuilder;
-            if (deviceIndex == 0) {
+            if (deviceIndex == EYE_TRACKER_MOUSE) {
                 processBuilder = new ProcessBuilder(pythonInterpreter, "-c", pythonScriptMouse);
+            } else if (deviceIndex == EYE_TRACKER_TOBII) {
+                processBuilder = new ProcessBuilder(pythonInterpreter, "-c", pythonScriptTobii);
             } else {
+                /* fallback */
                 processBuilder = new ProcessBuilder(pythonInterpreter, "-c", pythonScriptTobii);
             }
             processBuilder.redirectErrorStream(true);
