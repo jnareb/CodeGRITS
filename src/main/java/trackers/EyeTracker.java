@@ -36,8 +36,8 @@ import java.util.function.Consumer;
 public class EyeTracker implements Disposable {
     /* NOTE: used instead of enum */
     public static final int EYE_TRACKER_MOUSE = 0;
-    public static final int EYE_TRACKER_TOBII = 1;
-    public static final int EYE_TRACKER_IMOTIONS = 2; // currently unused
+    public static final int EYE_TRACKER_IMOTIONS = 1;
+    public static final int EYE_TRACKER_TOBII = 2; // should be last, not always added
 
     String dataOutputPath = "";
     /**

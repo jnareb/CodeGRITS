@@ -76,7 +76,7 @@ public class StartStopTrackingAction extends AnAction {
                         JOptionPane.showMessageDialog(null, "Python interpreter not found. Please configure the plugin first.");
                         return;
                     }
-                    if (config.getEyeTrackerDevice() != 0 && !AvailabilityChecker.checkEyeTracker(config.getPythonInterpreter())) {
+                    if (config.getEyeTrackerDevice() == EyeTracker.EYE_TRACKER_TOBII && !AvailabilityChecker.checkEyeTracker(config.getPythonInterpreter())) {
                         JOptionPane.showMessageDialog(null, "Eye tracker not found. Please configure the mouse simulation first.");
                         return;
                     }
