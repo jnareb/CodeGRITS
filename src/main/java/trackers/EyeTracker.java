@@ -321,60 +321,27 @@ public class EyeTracker implements Disposable {
                 processBuilder = new ProcessBuilder(pythonInterpreter, "-c", pythonScriptTobii);
             } else if (deviceIndex == EYE_TRACKER_IMOTIONS) {
                 processBuilder = new ProcessBuilder(pythonInterpreter, "-c", pythonScriptIMotions);
-                createNotification("created Python process for iMotions");
+                createNotification("created Python process for connecting to iMotions API");
             } else {
                 /* fallback */
                 processBuilder = new ProcessBuilder(pythonInterpreter, "-c", pythonScriptTobii);
             }
             processBuilder.redirectErrorStream(true);
             pythonProcess = processBuilder.start();
-            createNotification("started Python process for deviceIndex=" + deviceIndex);
+            //createNotification("started Python process for deviceIndex=" + deviceIndex);
 
             pythonOutputThread = new Thread(() -> {
                 try (InputStream inputStream = pythonProcess.getInputStream();
                      InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
                      BufferedReader bufferedReader = new BufferedReader(inputStreamReader)) {
                     String line;
-
-                    boolean firstLines = true;
-                    int lineNo = 0;
-                    int maxLines = 10;
-                    StringBuilder sb = new StringBuilder("Up to first " + maxLines + " lines of output from Python process:<br>\n");
-                    //sb.append("<pre>");
-
-                    try {
-                        if (pythonProcess.exitValue() != 0) {
-                            createNotification(
-                                    "Python process exited with error code: " + pythonProcess.exitValue() +
-                                            "<br>and error message:<br><pre>" +
-                                            Arrays.toString(inputStream.readAllBytes()) +
-                                            "</pre>"
-                            );
-                        }
-                    } catch (IllegalThreadStateException e) {
-                        // ignore this exception because the process is still running
-                    }
+                    boolean firstLine = true;
 
                     while ((line = bufferedReader.readLine()) != null) {
-                        if (firstLines) {
-                            lineNo += 1;
-
-                            sb.append(line).append("<br>\n");
-
-                            if (lineNo >= maxLines) {
-                                firstLines = false;
-
-                                //sb.append("</pre>");
-                                createNotification(sb.toString());
-                            }
-                        }
-                        try {
-                            processRawData(line);
-                        } catch (ArrayIndexOutOfBoundsException e) {
-                            createNotification("Problem processing raw data:<br>" +
-                                    line + "<br>");
-
-                            //createNotification(">>>" + sb.toString());
+                        processRawData(line);
+                        if (firstLine) {
+                            firstLine = false;
+                            createNotification("Successfully parsed line 1 of raw gaze data:<br>\n" + line);
                         }
                     }
                 } catch (IOException e) {
@@ -384,9 +351,9 @@ public class EyeTracker implements Disposable {
             });
 
             pythonOutputThread.start();
-            createNotification("started pythonOutputThread");
+            //createNotification("started pythonOutputThread");
         } catch (Exception e) {
-            createNotification("Exception when running track(): " + e.getMessage());
+            createNotification("Exception when running EyeTracker.track(): " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -597,8 +564,8 @@ public class EyeTracker implements Disposable {
      */
     public void setPythonScriptIMotions() {
         pythonScriptIMotions = loadScript("/scripts/imotions_to_codegrits.py");
-        createNotification("loaded iMotions script from resources");
-        createNotification("<pre>\n" + pythonScriptIMotions + "\n</pre>");
+        createNotification("loaded iMotions script ('imotions_to_codegrits.py') from resources");
+        //createNotification("<pre>\n" + pythonScriptIMotions + "\n</pre>");
 
         if (pythonScriptIMotions.contains("\"")) {
             createNotification("iMotions Python script contains double quotes");
