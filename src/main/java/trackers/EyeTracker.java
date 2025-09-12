@@ -213,9 +213,12 @@ public class EyeTracker implements Disposable {
      */
     public void stopTracking() throws TransformerException {
         isTracking = false;
+
         pythonOutputThread.interrupt();
         pythonProcess.destroy();
+
         XMLWriter.writeToXML(eyeTracking, dataOutputPath + "/eye_tracking.xml");
+        createNotification("Successfully saved eye tracking data to '" + dataOutputPath + "/eye_tracking.xml'");
     }
 
     /**
