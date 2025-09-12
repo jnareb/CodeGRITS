@@ -1,5 +1,6 @@
 package trackers;
 
+import com.intellij.notification.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -28,7 +29,33 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.function.Consumer;
+
+
+// demo enum - to be used for EyeTrackerType
+/*
+enum Level {
+    LOW,
+    MEDIUM,
+    HIGH;
+
+    private static final class StaticFields {
+        private static int COUNTER = 0;
+    }
+    public int lvl;
+
+    private Level() { this.lvl = StaticFields.COUNTER++; }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Level myVar = Level.HIGH;
+        System.out.println(myVar);
+        System.out.println(myVar.lvl);
+    }
+}
+*/
 
 /**
  * This class is the eye tracker.
@@ -294,28 +321,72 @@ public class EyeTracker implements Disposable {
                 processBuilder = new ProcessBuilder(pythonInterpreter, "-c", pythonScriptTobii);
             } else if (deviceIndex == EYE_TRACKER_IMOTIONS) {
                 processBuilder = new ProcessBuilder(pythonInterpreter, "-c", pythonScriptIMotions);
+                createNotification("created Python process for iMotions");
             } else {
                 /* fallback */
                 processBuilder = new ProcessBuilder(pythonInterpreter, "-c", pythonScriptTobii);
             }
             processBuilder.redirectErrorStream(true);
             pythonProcess = processBuilder.start();
+            createNotification("started Python process for deviceIndex=" + deviceIndex);
 
             pythonOutputThread = new Thread(() -> {
                 try (InputStream inputStream = pythonProcess.getInputStream();
                      InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
                      BufferedReader bufferedReader = new BufferedReader(inputStreamReader)) {
                     String line;
+
+                    boolean firstLines = true;
+                    int lineNo = 0;
+                    int maxLines = 10;
+                    StringBuilder sb = new StringBuilder("Up to first " + maxLines + " lines of output from Python process:<br>\n");
+                    //sb.append("<pre>");
+
+                    try {
+                        if (pythonProcess.exitValue() != 0) {
+                            createNotification(
+                                    "Python process exited with error code: " + pythonProcess.exitValue() +
+                                            "<br>and error message:<br><pre>" +
+                                            Arrays.toString(inputStream.readAllBytes()) +
+                                            "</pre>"
+                            );
+                        }
+                    } catch (IllegalThreadStateException e) {
+                        // ignore this exception because the process is still running
+                    }
+
                     while ((line = bufferedReader.readLine()) != null) {
-                        processRawData(line);
+                        if (firstLines) {
+                            lineNo += 1;
+
+                            sb.append(line).append("<br>\n");
+
+                            if (lineNo >= maxLines) {
+                                firstLines = false;
+
+                                //sb.append("</pre>");
+                                createNotification(sb.toString());
+                            }
+                        }
+                        try {
+                            processRawData(line);
+                        } catch (ArrayIndexOutOfBoundsException e) {
+                            createNotification("Problem processing raw data:<br>" +
+                                    line + "<br>");
+
+                            //createNotification(">>>" + sb.toString());
+                        }
                     }
                 } catch (IOException e) {
+                    createNotification("IOException when starting pythonOutputThread: " + e.getMessage());
                     e.printStackTrace();
                 }
             });
 
             pythonOutputThread.start();
+            createNotification("started pythonOutputThread");
         } catch (Exception e) {
+            createNotification("Exception when running track(): " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -526,6 +597,12 @@ public class EyeTracker implements Disposable {
      */
     public void setPythonScriptIMotions() {
         pythonScriptIMotions = loadScript("/scripts/imotions_to_codegrits.py");
+        createNotification("loaded iMotions script from resources");
+        createNotification("<pre>\n" + pythonScriptIMotions + "\n</pre>");
+
+        if (pythonScriptIMotions.contains("\"")) {
+            createNotification("iMotions Python script contains double quotes");
+        }
     }
 
     private String loadScript(String scriptPath) {
@@ -546,5 +623,18 @@ public class EyeTracker implements Disposable {
      */
     public void setDeviceIndex(int deviceIndex) {
         this.deviceIndex = deviceIndex;
+    }
+
+    /**
+     * Create a notification, which can be used to notify the user about the problem
+     * or help debug the plugin.
+     */
+    public static void createNotification(String content) {
+        // NOTE: actions just use `new Notification(...)` instead
+
+        NotificationGroupManager.getInstance()
+                .getNotificationGroup("CodeGRITS Notification Group")
+                .createNotification("CodeGRITS plugin", content, NotificationType.INFORMATION)
+                .notify(null);
     }
 }

@@ -25,6 +25,8 @@ public class AvailabilityChecker {
                 import sys
                 import math
                 
+                import anyio
+                
                 print('OK')
                 """;
 

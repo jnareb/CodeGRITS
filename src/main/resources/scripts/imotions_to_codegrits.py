@@ -11,10 +11,15 @@ import screeninfo
 from anyio.abc import SocketStream
 
 
+VERBOSE=False
+
+
 def parse_line(line: str) -> dict | None:
     try:
         data = json.loads(line.strip())
     except json.JSONDecodeError as e:
+        if VERBOSE:
+            print(f'error decoding line {line}:<br>\n{e}<br>\n', file=sys.stderr)
         data = None
 
     return data
@@ -46,7 +51,7 @@ def is_gaze_valid(data: dict, eye: EyeSide) -> bool:
         return False
 
 
-async def connect(host: str = "localhost", port: int = 8088):
+async def connect(host: str = 'localhost', port: int = 8088):
     screen = screeninfo.get_monitors()[0]
     screen_width  = screen.width
     screen_height = screen.height
@@ -56,19 +61,24 @@ async def connect(host: str = "localhost", port: int = 8088):
             await process_events(client, screen_width, screen_height)
 
     except* ConnectionRefusedError:
-        pass
+        if VERBOSE:
+            print('Could not connect to iMotions API server.', file=sys.stderr)
 
     except* OSError as eg:
-        pass
+        if VERBOSE:
+            print('Problem trying to connect to iMotions API server.', file=sys.stderr)
 
     except* ConnectionAbortedError as eg:
-        pass
+        if VERBOSE:
+            print('Connection to iMotions API server aborted.', file=sys.stderr)
 
     except* KeyboardInterrupt:
-        pass
+        if VERBOSE:
+            print('Keyboard interrupt during connect().', file=sys.stderr)
 
     except* anyio.EndOfStream:
-        pass
+        if VERBOSE:
+            print('End of stream from iMotions API server.', file=sys.stderr)
 
 
 async def process_events(imotions_server: SocketStream,
@@ -79,23 +89,18 @@ async def process_events(imotions_server: SocketStream,
         if not response:
             continue
 
-        #print(f">>> {response=}")
-
         # NOTE: here response cannot be empty
         lines: list[str] = response.decode().splitlines(keepends=True)
-        #print(f">>> {lines=}")
+
         if line_acc:
             lines[0] = line_acc + lines[0]
             line_acc = ''
         if lines[-1][-1] != '\n':
             line_acc = lines.pop()
 
-        #print(f"--- {lines=}")
 
         for line in lines:
-            #print(f">>> {line=}", flush=True)
             data = parse_line(line)
-            #print(f"... {data=}", flush=True)
             if data is None:
                 continue
 
@@ -127,12 +132,14 @@ async def main():
     await connect()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     try:
         anyio.run(main)
     except KeyboardInterrupt:
-        pass
+        if VERBOSE:
+            print('Keyboard interrupt.', file=sys.stderr)
     except ConnectionAbortedError as e:
-        pass
+        if VERBOSE:
+            print('Connection aborted.', file=sys.stderr)
     finally:
         pass
