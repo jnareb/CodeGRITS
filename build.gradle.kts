@@ -2,6 +2,7 @@ plugins {
     id("java")
 //    id("org.jetbrains.kotlin.jvm") version "1.8.21"
     id("org.jetbrains.intellij") version "1.13.3"
+    id("idea")
 }
 
 group = "io.github.codegrits"
@@ -18,6 +19,11 @@ dependencies {
     implementation("org.bytedeco:javacv:1.5.9")
     implementation("org.bytedeco:ffmpeg:6.0-1.5.9")
     implementation("org.bytedeco:ffmpeg-platform:6.0-1.5.9")
+
+    // JUnit for tests
+    testImplementation(platform("org.junit:junit-bom:5.13.4"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 // Configure Gradle IntelliJ Plugin
@@ -70,5 +76,12 @@ tasks {
     buildPlugin {
         dependsOn(createOpenApiSourceJar)
         from(createOpenApiSourceJar) { into("lib/src") }
+    }
+
+    test {
+        useJUnitPlatform()
+        testLogging {
+            events("passed", "skipped", "failed")
+        }
     }
 }
