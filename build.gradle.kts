@@ -2,7 +2,7 @@ plugins {
     id("java")
 //    id("org.jetbrains.kotlin.jvm") version "1.8.21"
     id("org.jetbrains.intellij") version "1.13.3"
-    id("idea")
+    //id("idea")
 }
 
 group = "io.github.codegrits"
@@ -24,6 +24,10 @@ dependencies {
     testImplementation(platform("org.junit:junit-bom:5.13.4"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine")
+
+    testCompileOnly("org.junit.jupiter:junit-jupiter-api")
 }
 
 // Configure Gradle IntelliJ Plugin
@@ -46,6 +50,11 @@ tasks {
         sourceCompatibility = "17"
         targetCompatibility = "17"
     }
+
+    //withType<JavaCompile>().configureEach {
+    //    options.release.set(17)
+    //}
+
 //    withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 //        kotlinOptions.jvmTarget = "17"
 //    }

@@ -13,5 +13,5 @@
     <option name="OTHER_OPTIONS" value="-J-Duser.language=en -J-Duser.country=US" />
     <option name="LOCALE" value="en_US" />
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_17" default="true" project-jdk-name="17" project-jdk-type="JavaSDK" />
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_21" default="true" project-jdk-name="jbr-21" project-jdk-type="JavaSDK" />
 </project>
