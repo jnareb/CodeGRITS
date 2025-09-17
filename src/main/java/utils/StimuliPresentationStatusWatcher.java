@@ -8,6 +8,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Future;
 
 public class StimuliPresentationStatusWatcher {
@@ -21,6 +22,9 @@ public class StimuliPresentationStatusWatcher {
     private final PipedOutputStream out;
 
     private AsynchronousSocketChannel channel;
+
+    /// Buffer to accumulate partial lines
+    private final StringBuilder lineBuffer = new StringBuilder();
 
     public StimuliPresentationStatusWatcher(String host, int port) throws IOException {
         this.host = host;
@@ -71,14 +75,25 @@ public class StimuliPresentationStatusWatcher {
                 }
 
                 buf.flip();
-                try {
-                    out.write(buf.array(), 0, bytesRead);
-                    out.flush();
-                } catch (IOException e) {
-                    try { out.close(); } catch (IOException ignored) {}
-                    return;
-                }
+                String chunk = StandardCharsets.UTF_8.decode(buf).toString();
                 buf.clear();
+
+                // Accumulate and process lines
+                lineBuffer.append(chunk);
+                int newlineIndex;
+                while ((newlineIndex = lineBuffer.indexOf("\n")) != -1) {
+                    String rawLine = lineBuffer.substring(0, newlineIndex).trim();
+                    lineBuffer.delete(0, newlineIndex + 1);
+
+                    String processed = processLine(rawLine);
+                    try {
+                        out.write((processed + "\n").getBytes(StandardCharsets.UTF_8));
+                        out.flush();
+                    } catch (IOException e) {
+                        try { out.close(); } catch (IOException ignored) {}
+                        return;
+                    }
+                }
 
                 // Schedule next read
                 channel.read(buf, buf, this);
@@ -89,5 +104,18 @@ public class StimuliPresentationStatusWatcher {
                 try { out.close(); } catch (IOException ignored) {}
             }
         });
+    }
+
+    /**
+     * Example line processor (can be overridden/subclassed)
+     * <p>
+     * Currently: identity transform
+     *
+     * @param line The line to process
+     * @return The processed line
+     */
+    protected String processLine(String line) {
+        // Identity transform by default
+        return line;
     }
 }
