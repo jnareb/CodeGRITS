@@ -1,4 +1,5 @@
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,13 +29,19 @@ class StimuliPresentationStatusWatcherTests {
         // Start a simple server in the background
         serverTask = Executors.newSingleThreadExecutor().submit(() -> {
             try (Socket client = serverSocket.accept()) {
-                client.getOutputStream().write("line1\n".getBytes());
+                client.getOutputStream().write("{\"SeqNo\":23331,\"DeviceName\":\"AttentionTool\",\"SampleName\":\"GazeCalibrationStart\",\"Timestamp\":-1,\"DateTime\":\"20250617112120816\"}\n".getBytes());
                 client.getOutputStream().flush();
                 Thread.sleep(100); // simulate streaming
-                client.getOutputStream().write("line2\n".getBytes());
+                client.getOutputStream().write("{\"SeqNo\":23333,\"DeviceName\":\"AttentionTool\",\"SampleName\":\"SlideshowStart\",\"Timestamp\":0,\"DateTime\":\"20250617092213090\"}\n".getBytes());
                 client.getOutputStream().flush();
                 Thread.sleep(100);
-                client.getOutputStream().write("line3\n".getBytes());
+                client.getOutputStream().write("{\"SeqNo\":23340,\"DeviceName\":\"EyeTracker\",\"SampleName\":\"EyeData\",\"Timestamp\":3.057,\"GazeTime\":0,\"GazeLeftX\":1048,\"GazeLeftY\":676,\"GazeRightX\":1101,\"GazeRightY\":682,\"PupilLeft\":2.9289222,\"PupilRight\":3.1213243,\"DistanceLeft\":640.85266,\"DistanceRight\":644.6187,\"CameraLeftX\":0.6137858,\"CameraLeftY\":0.5087645,\"CameraRightX\":0.417163,\"CameraRightY\":0.50805247}\n".getBytes());
+                client.getOutputStream().flush();
+                Thread.sleep(100);
+                client.getOutputStream().write("{\"SeqNo\":24577,\"DeviceName\":\"AttentionTool\",\"SampleName\":\"SlideshowEnd\",\"Timestamp\":10133.0606,\"DateTime\":\"20250617092223223\"}\n".getBytes());
+                client.getOutputStream().flush();
+                Thread.sleep(100);
+                client.getOutputStream().write("{\"SeqNo\":24578,\"DeviceName\":\"EyeTracker\",\"SampleName\":\"EyeData\",\"Timestamp\":10130.3706,\"GazeTime\":10127.31300000001,\"GazeLeftX\":1028,\"GazeLeftY\":683,\"GazeRightX\":1066,\"GazeRightY\":690,\"PupilLeft\":2.5136456,\"PupilRight\":2.5781782,\"DistanceLeft\":644.88635,\"DistanceRight\":647.1505,\"CameraLeftX\":0.6022481,\"CameraLeftY\":0.48949304,\"CameraRightX\":0.40546718,\"CameraRightY\":0.4911291}\n".getBytes());
                 client.getOutputStream().flush();
             } catch (Exception ignored) {}
         });
@@ -51,20 +58,29 @@ class StimuliPresentationStatusWatcherTests {
     }
 
     @Test
-    void testWatcherReceivesMessages() throws Exception {
+    void testWatcherProcessesMessages() throws Exception {
         StimuliPresentationStatusWatcher client = new StimuliPresentationStatusWatcher("127.0.0.1", port);
         client.start();
 
-        try (InputStream in = client.getInputStream();
-             BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
+        try (
+                InputStream in = client.getInputStream();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(in))
+        ) {
 
             String line1 = reader.readLine();
             String line2 = reader.readLine();
             String line3 = reader.readLine();
+            String line4 = reader.readLine();
+            String line5 = reader.readLine();
 
-            assertEquals("line1", line1);
-            assertEquals("line2", line2);
-            assertEquals("line3", line3);
+            assertEquals("data", line1);
+            assertEquals("start", line2);
+            assertEquals("data", line3);
+            assertEquals("stop", line4);
+            assertEquals("data", line5);
+
+            assertNull(reader.readLine());
+
         } finally {
             client.stop();
         }

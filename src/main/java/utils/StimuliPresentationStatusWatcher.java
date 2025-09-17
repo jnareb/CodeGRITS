@@ -1,5 +1,10 @@
 package utils;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonParser;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PipedInputStream;
@@ -109,13 +114,41 @@ public class StimuliPresentationStatusWatcher {
     /**
      * Example line processor (can be overridden/subclassed)
      * <p>
-     * Currently: identity transform
+     * Currently: try to parse the line as a JSON object, and return
+     * either "data", "start", or "stop" (or "invalid JSON", or "not a JSON object").
+     * <p>
+     * The value of "start" is returned on iMotions Lab stimulus presentation start,
+     * and the value of "stop" is returned on the stimulus presentation stop.
+     * <p>
+     * @see <a href="https://github.com/ncusi/iMotions-bridge-for-iTrace">https://github.com/ncusi/iMotions-bridge-for-iTrace</a>
      *
      * @param line The line to process
-     * @return The processed line
+     * @return "data", "start", or "stop"
      */
     protected String processLine(String line) {
-        // Identity transform by default
-        return line;
+        try {
+            JsonElement jsonElement = JsonParser.parseString(line);
+            JsonObject jsonObject = jsonElement.getAsJsonObject();
+
+            if (jsonObject.has("DeviceName") &&
+                jsonObject.get("DeviceName").getAsString().equals("AttentionTool") &&
+                jsonObject.has("SampleName")) {
+
+                String sampleName = jsonObject.get("SampleName").getAsString();
+                if (sampleName.equals("SlideshowStart")) {
+                    return "start";
+                } else if (sampleName.equals("SlideshowEnd")) {
+                    return "stop";
+                }
+            }
+        } catch (JsonParseException ignored) {
+            // invalid JSON, ignore
+            return "invalid JSON";
+        } catch (IllegalStateException ignored) {
+            // not a JSON object, ignore
+            return "not a JSON object";
+        }
+
+        return "data";
     }
 }
