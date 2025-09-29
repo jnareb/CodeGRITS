@@ -26,7 +26,7 @@ class StimuliPresentationStatusWatcherTests {
         serverSocket = new ServerSocket(0); // 0 = pick a free port
         port = serverSocket.getLocalPort();
 
-        System.out.println("Server running on port : " + port);
+        //System.out.println("Server running on port : " + port);
 
         // Start a simple server in the background
         serverTask = Executors.newSingleThreadExecutor().submit(() -> {
@@ -79,8 +79,8 @@ class StimuliPresentationStatusWatcherTests {
         client.stop();
 
         // DEBUG
-        System.out.println("Events received: " + events);
-        System.out.println("Total sleep time: " + totalSleepMs);
+        //System.out.println("Events received: " + events);
+        //System.out.println("Total sleep time: " + totalSleepMs);
 
         // Check that the client received the expected events
         assertEquals(6, events.size());
@@ -94,13 +94,13 @@ class StimuliPresentationStatusWatcherTests {
 
     @Test
     void testTcpCheckExists() {
-        System.out.println("testTcpCheckExists");
+        //System.out.println("testTcpCheckExists");
         assertTrue(TcpCheck.isServerAvailable("127.0.0.1", port, 1000));
     }
 
     @Test
     void testTcpCheckNotExists() {
-        System.out.println("testTcpCheckNotExists");
+        //System.out.println("testTcpCheckNotExists");
         assertFalse(TcpCheck.isServerAvailable("127.0.0.1", port+1, 1000));
     }
 }
