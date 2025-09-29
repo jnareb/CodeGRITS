@@ -7,28 +7,20 @@ import java.net.Socket;
 import java.nio.channels.SocketChannel;
 
 public class TcpCheck {
-    public static boolean isServerAvailable(String host, int port) {
-        try (SocketChannel channel = SocketChannel.open()) {
-            channel.configureBlocking(true);
-            boolean connected = channel.connect(new InetSocketAddress(host, port));
-//            System.out.println("Connected to: " + channel.getRemoteAddress());
-
-            return connected; // connected successfully
-
-        } catch (IOException e) {
-            return false; // connection failed
-        }
-    }
-
+    /**
+     * Checks the availability of a server by attempting to establish a connection
+     * to a specified host and port within a given timeout period.
+     *
+     * @param host          The hostname or IP address of the server to check.
+     * @param port          The port number on which the server is expected to listen.
+     * @param timeoutMillis The timeout in milliseconds for the connection attempt.
+     * @return {@code true} if the server is available and responds within the specified timeout,
+     *         {@code false} otherwise.
+     */
     public static boolean isServerAvailable(String host, int port, int timeoutMillis) {
         try (Socket socket = new Socket()) {
             socket.connect(new InetSocketAddress(host, port), timeoutMillis);
             socket.setSoTimeout(timeoutMillis); // read timeout
-//            System.out.println(
-//                    "Connected to: " + socket.getRemoteSocketAddress() + "; " +
-//                    "(timeout: " + timeoutMillis + "ms)" + "; " +
-//                    socket.getInetAddress().isReachable(timeoutMillis)
-//            );
 
             // try to read one byte
             InputStream in = socket.getInputStream();
