@@ -8,13 +8,13 @@ import com.google.gson.JsonParser;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 
 public class StimuliPresentationStatusWatcher {
     private final String host;
@@ -24,18 +24,19 @@ public class StimuliPresentationStatusWatcher {
     private final int byteBufferSize = 4096;
 
     private final PipedInputStream in;
-    private final PipedOutputStream out;
+    private final Consumer<String> onEvent;
 
     private AsynchronousSocketChannel channel;
 
     /// Buffer to accumulate partial lines
     private final StringBuilder lineBuffer = new StringBuilder();
 
-    public StimuliPresentationStatusWatcher(String host, int port) throws IOException {
+    public StimuliPresentationStatusWatcher(String host, int port, Consumer<String> onEvent) {
         this.host = host;
         this.port = port;
+
         this.in  = new PipedInputStream(pipeBufferSize);
-        this.out = new PipedOutputStream(in);
+        this.onEvent = onEvent;
     }
 
     public void start() throws IOException {
@@ -59,7 +60,6 @@ public class StimuliPresentationStatusWatcher {
                 channel.close();
             } catch (IOException ignored) {}
         }
-        out.close();
         in.close();
     }
 
@@ -75,7 +75,7 @@ public class StimuliPresentationStatusWatcher {
             @Override
             public void completed(Integer bytesRead, ByteBuffer buf) {
                 if (bytesRead == -1) {
-                    try { out.close(); } catch (IOException ignored) {}
+                    onEvent.accept("close");
                     return; // server closed connection
                 }
 
@@ -91,13 +91,7 @@ public class StimuliPresentationStatusWatcher {
                     lineBuffer.delete(0, newlineIndex + 1);
 
                     String processed = processLine(rawLine);
-                    try {
-                        out.write((processed + "\n").getBytes(StandardCharsets.UTF_8));
-                        out.flush();
-                    } catch (IOException e) {
-                        try { out.close(); } catch (IOException ignored) {}
-                        return;
-                    }
+                    onEvent.accept(processed);
                 }
 
                 // Schedule next read
@@ -106,7 +100,8 @@ public class StimuliPresentationStatusWatcher {
 
             @Override
             public void failed(Throwable exc, ByteBuffer buf) {
-                try { out.close(); } catch (IOException ignored) {}
+                // just stop on failure
+                onEvent.accept("failed");
             }
         });
     }
