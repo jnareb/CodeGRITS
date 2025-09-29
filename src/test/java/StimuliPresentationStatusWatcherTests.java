@@ -1,10 +1,8 @@
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import utils.StimuliPresentationStatusWatcher;
+import utils.TcpCheck;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -14,6 +12,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class StimuliPresentationStatusWatcherTests {
 
@@ -25,6 +25,8 @@ class StimuliPresentationStatusWatcherTests {
     void setUp() throws IOException {
         serverSocket = new ServerSocket(0); // 0 = pick a free port
         port = serverSocket.getLocalPort();
+
+        System.out.println("Server running on port : " + port);
 
         // Start a simple server in the background
         serverTask = Executors.newSingleThreadExecutor().submit(() -> {
@@ -86,4 +88,15 @@ class StimuliPresentationStatusWatcherTests {
         }
     }
 
+    @Test
+    void testTcpCheckExists() {
+        System.out.println("testTcpCheckExists");
+        assertTrue(TcpCheck.isServerAvailable("127.0.0.1", port, 1000));
+    }
+
+    @Test
+    void testTcpCheckNotExists() {
+        System.out.println("testTcpCheckNotExists");
+        assertFalse(TcpCheck.isServerAvailable("127.0.0.1", port+1, 1000));
+    }
 }
