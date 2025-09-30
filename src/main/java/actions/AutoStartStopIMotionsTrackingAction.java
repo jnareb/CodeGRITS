@@ -37,7 +37,22 @@ public class AutoStartStopIMotionsTrackingAction extends DumbAwareToggleAction {
      * used to automatically start or stop tracking eye movements when a stimulus presentation begins or ends.
      */
     private final StimuliPresentationStatusWatcher stimuliWatcher =
-            new StimuliPresentationStatusWatcher("127.0.0.1", 8088, s -> {});
+            new StimuliPresentationStatusWatcher("127.0.0.1", 8088, s -> {
+                switch (s) {
+                    case "start":
+                        EyeTracker.createNotification("stimuliWatcher: Stimulus presentation started");
+                        break;
+                    case "stop":
+                        EyeTracker.createNotification("stimuliWatcher: Stimulus presentation stopped");
+                        break;
+                    case "close":
+                        EyeTracker.createNotification("stimuliWatcher: iMotions Lab server disconnected");
+                        break;
+                    case "failed":
+                        EyeTracker.createNotification("stimuliWatcher: iMotions Lab server connection failed");
+                        break;
+                }
+            });
 
     /**
      * Returns the selected (checked, pressed) state of the action.
