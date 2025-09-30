@@ -4,6 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
+import trackers.EyeTracker;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,6 +47,8 @@ public class StimuliPresentationStatusWatcher {
         try {
             connectFuture.get(); // wait for the connection
         } catch (Exception e) {
+            EyeTracker.createNotification("StimuliPresentationStatusWatcher: " +
+                    "Failed to connect to TCP server at %s:%d".formatted(host, port));
             throw new IOException("Failed to connect to %s:%d".formatted(host, port), e);
         }
 

@@ -55,6 +55,12 @@
                 description="Configure tracking options">
             <add-to-group group-id="ToolsMenu" anchor="after" relative-to-action="CodeGRITS.PauseResumeTracking"/>
         </action>
+        <action id="CodeGRITS.AutoStartStopIMotionsTrackingAction"
+                class="actions.AutoStartStopIMotionsTrackingAction"
+                text="Auto Start/Stop Tracking"
+                description="Automatically start/stop tracking on stimulus start/stop when using iMotion lab eye-tracker">
+            <add-to-group group-id="ToolsMenu" anchor="after" relative-to-action="CodeGRITS.Config"/>
+        </action>
         <group id="CodeGRITS.AddLabelActionGroup" class="actions.AddLabelActionGroup" text="Add Label"
                description="Add label" popup="true" icon="AllIcons.Actions.Edit">
             <add-to-group group-id="EditorPopupMenu" anchor="first"/>
