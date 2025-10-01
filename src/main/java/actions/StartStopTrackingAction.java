@@ -2,11 +2,9 @@ package actions;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import components.ConfigDialog;
 import entity.Config;
 import org.jetbrains.annotations.NotNull;
@@ -54,26 +52,7 @@ public class StartStopTrackingAction extends AnAction {
      */
     @Override
     public void update(@NotNull AnActionEvent e) {
-        // automatic start/stop tracking is enabled, and tracking is possible
-        if (AutoStartStopIMotionsTrackingAction.isAutoTracking() && config.configExists()) {
-            if (isTracking != AutoStartStopIMotionsTrackingAction.shouldBeTracking()) {
-                actionPerformed(e);  // trigger actual start/stop tracking action
-            }
-        }
-
-        final Application application = ApplicationManager.getApplication();
-        if (application != null) {
-            application.invokeLater(() -> {
-                application.runWriteAction(() -> {
-                    e.getPresentation().setText(isTracking ? "Stop Tracking" : "Start Tracking");
-                });
-            });
-        }
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return ActionUpdateThread.BGT;
+        e.getPresentation().setText(isTracking ? "Stop Tracking" : "Start Tracking");
     }
 
     /**
@@ -83,36 +62,26 @@ public class StartStopTrackingAction extends AnAction {
      */
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-        if (config.configExists()) {
-            config.loadFromJson();
-        } else {
-            Notification notification = new Notification("CodeGRITS Notification Group", "Configuration",
-                    "Please configure the plugin first.", NotificationType.WARNING);
-            notification.notify(e.getProject());
+        if (!tryLoadConfig(e.getProject()))
             return;
-        }
+
         try {
             if (!isTracking) {
-                if (config.getCheckBoxes().get(1)) {
-                    if (!AvailabilityChecker.checkPythonEnvironment(config.getPythonInterpreter())) {
-                        JOptionPane.showMessageDialog(null, "Python interpreter not found. Please configure the plugin first.");
+                if (isEyeTrackingSelected()) {
+                    if (!isEyeTrackingAvailable())
                         return;
-                    }
-                    if (config.getEyeTrackerDevice() == EyeTracker.EYE_TRACKER_TOBII && !AvailabilityChecker.checkEyeTracker(config.getPythonInterpreter())) {
-                        JOptionPane.showMessageDialog(null, "Eye tracker not found. Please configure the mouse simulation first.");
-                        return;
-                    }
                 }
 
                 isTracking = true;
                 ConfigAction.setIsEnabled(false);
                 AddLabelActionGroup.setIsEnabled(true);
+
                 String projectPath = e.getProject() != null ? e.getProject().getBasePath() : "";
                 String realDataOutputPath = Objects.equals(config.getDataOutputPath(), ConfigDialog.selectDataOutputPlaceHolder)
                         ? projectPath : config.getDataOutputPath();
                 realDataOutputPath += "/" + System.currentTimeMillis() + "/";
 
-                if (config.getCheckBoxes().get(2)) {
+                if (isScreenRecordingSelected()) {
                     screenRecorder.setDataOutputPath(realDataOutputPath);
                     screenRecorder.startRecording();
                 }
@@ -122,7 +91,7 @@ public class StartStopTrackingAction extends AnAction {
                 iDETracker.setDataOutputPath(realDataOutputPath);
                 iDETracker.startTracking(e.getProject());
 
-                if (config.getCheckBoxes().get(1)) {
+                if (isEyeTrackingSelected()) {
                     eyeTracker = new EyeTracker();
                     eyeTracker.setProjectPath(projectPath);
                     eyeTracker.setDataOutputPath(realDataOutputPath);
@@ -134,17 +103,16 @@ public class StartStopTrackingAction extends AnAction {
                     eyeTracker.setPythonScriptIMotions();
                     eyeTracker.startTracking(e.getProject());
                 }
-                AddLabelAction.setIsEnabled(true);
 
             } else {
                 isTracking = false;
-                iDETracker.stopTracking();
                 AddLabelAction.setIsEnabled(false);
                 ConfigAction.setIsEnabled(true);
-                if (config.getCheckBoxes().get(1) && eyeTracker != null) {
+                iDETracker.stopTracking();
+                if (isEyeTrackingSelected() && eyeTracker != null) {
                     eyeTracker.stopTracking();
                 }
-                if (config.getCheckBoxes().get(2)) {
+                if (isScreenRecordingSelected()) {
                     screenRecorder.stopRecording();
                 }
                 eyeTracker = null;
@@ -152,6 +120,38 @@ public class StartStopTrackingAction extends AnAction {
         } catch (ParserConfigurationException | TransformerException | IOException | InterruptedException ex) {
             throw new RuntimeException(ex);
         }
+    }
+
+    private boolean tryLoadConfig(Project project) {
+        if (config.configExists()) {
+            config.loadFromJson();
+            return true;
+        } else {
+            Notification notification = new Notification("CodeGRITS Notification Group", "Configuration",
+                    "Please configure the plugin first.", NotificationType.WARNING);
+            notification.notify(project);
+            return false;
+        }
+    }
+
+    private Boolean isEyeTrackingSelected() {
+        return config.getCheckBoxes().get(1);
+    }
+
+    private Boolean isScreenRecordingSelected() {
+        return config.getCheckBoxes().get(2);
+    }
+
+    private boolean isEyeTrackingAvailable() throws IOException, InterruptedException {
+        if (!AvailabilityChecker.checkPythonEnvironment(config.getPythonInterpreter())) {
+            JOptionPane.showMessageDialog(null, "Python interpreter not found. Please configure the plugin first.");
+            return false;
+        }
+        if (config.getEyeTrackerDevice() == EyeTracker.EYE_TRACKER_TOBII && !AvailabilityChecker.checkEyeTracker(config.getPythonInterpreter())) {
+            JOptionPane.showMessageDialog(null, "Eye tracker not found. Please configure the mouse simulation first.");
+            return false;
+        }
+        return true;
     }
 
     public static boolean isTracking() {
