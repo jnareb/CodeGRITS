@@ -9,6 +9,7 @@ import trackers.EyeTracker;
 import utils.StimuliPresentationStatusWatcher;
 import utils.TcpCheck;
 
+import java.awt.*;
 import java.io.IOException;
 
 /**
@@ -84,15 +85,16 @@ public class AutoStartStopIMotionsTrackingAction extends DumbAwareToggleAction {
                 if (!isServerStarted) {
                     EyeTracker.createNotification("it looks like the server is not started");
                 }
-                ApplicationManager.getApplication().runReadAction(() -> {
+                EventQueue.invokeLater(new Thread(() -> {
                     try {
+                        EyeTracker.createNotification("stimuliWatcher.start() from new thread...");
                         stimuliWatcher.start();
                     } catch (IOException ex) {
                         EyeTracker.createNotification("IOException from stimuliWatcher.start():<br>\n" + ex.getMessage() +
                                 "<br>\n" + "turning off auto-tracking");
                         isAutoTracking = false;
                     }
-                });
+                }));
                 try {
                     Thread.sleep(10000);
                     EyeTracker.createNotification("slept 10000 ms with Thread.sleep()");
