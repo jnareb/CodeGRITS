@@ -20,6 +20,29 @@ public class AutoStartStopIMotionsTrackingAction extends DumbAwareToggleAction {
      * This variable indicates whether to automatically start/stop tracking.
      */
     private static boolean isAutoTracking = false;
+
+    /**
+     * Checks whether automatically staring/stopping tracking is currently enabled.
+     * @return true if auto-tracking is enabled, false otherwise
+     */
+    public static boolean isAutoTracking() {
+        return isAutoTracking;
+    }
+
+    /**
+     * This variable indicates if the iMotions Lab server is up
+     * and if the stimulus presentation has started.
+     */
+    private static boolean shouldBeTracking = false;
+
+    /**
+     * Checks whether the iMotions Lab server is up and the stimulus presentation has started.
+     * @return true if iMotions Lab server is up and stimulus presentation has started, false otherwise
+     */
+    public static boolean shouldBeTracking() {
+        return shouldBeTracking;
+    }
+
     /**
      * This variable represents an instance of {@link StimuliPresentationStatusWatcher} which is responsible
      * for monitoring the presentation status of stimuli via TCP communication with an iMotions Lab server.
@@ -44,15 +67,19 @@ public class AutoStartStopIMotionsTrackingAction extends DumbAwareToggleAction {
                 switch (s) {
                     case "start":
                         EyeTracker.createNotification("stimuliWatcher: Stimulus presentation started");
+                        shouldBeTracking = true;
                         break;
                     case "stop":
                         EyeTracker.createNotification("stimuliWatcher: Stimulus presentation stopped");
+                        shouldBeTracking = false;
                         break;
                     case "close":
                         EyeTracker.createNotification("stimuliWatcher: iMotions Lab server disconnected");
+                        shouldBeTracking = false;
                         break;
                     case "failed":
                         EyeTracker.createNotification("stimuliWatcher: iMotions Lab server connection failed");
+                        shouldBeTracking = false;
                         break;
                 }
             });
@@ -88,21 +115,23 @@ public class AutoStartStopIMotionsTrackingAction extends DumbAwareToggleAction {
                 EventQueue.invokeLater(new Thread(() -> {
                     try {
                         EyeTracker.createNotification("stimuliWatcher.start() from new thread...");
+                        shouldBeTracking = false;
                         stimuliWatcher.start();
                     } catch (IOException ex) {
                         EyeTracker.createNotification("IOException from stimuliWatcher.start():<br>\n" + ex.getMessage() +
                                 "<br>\n" + "turning off auto-tracking");
+                        shouldBeTracking = false;
                         isAutoTracking = false;
                     }
                 }));
-                try {
-                    Thread.sleep(10000);
-                    EyeTracker.createNotification("slept 10000 ms with Thread.sleep()");
-                } catch (InterruptedException ex) {
-                    EyeTracker.createNotification("InterruptedException after Thread.sleep()");
-                } finally {
-                    EyeTracker.createNotification("after Thread.sleep()");
-                }
+//                try {
+//                    Thread.sleep(10000);
+//                    EyeTracker.createNotification("slept 10000 ms with Thread.sleep()");
+//                } catch (InterruptedException ex) {
+//                    EyeTracker.createNotification("InterruptedException after Thread.sleep()");
+//                } finally {
+//                    EyeTracker.createNotification("after Thread.sleep()");
+//                }
             });
         } else {
             try {
@@ -115,6 +144,6 @@ public class AutoStartStopIMotionsTrackingAction extends DumbAwareToggleAction {
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return ActionUpdateThread.BGT;  // or EDT
+        return ActionUpdateThread.EDT;  // BGT (background thread) or EDT (event-dispatch thread)
     }
 }

@@ -2,8 +2,11 @@ package actions;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import components.ConfigDialog;
 import entity.Config;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +54,26 @@ public class StartStopTrackingAction extends AnAction {
      */
     @Override
     public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setText(isTracking ? "Stop Tracking" : "Start Tracking");
+        // automatic start/stop tracking is enabled, and tracking is possible
+        if (AutoStartStopIMotionsTrackingAction.isAutoTracking() && config.configExists()) {
+            if (isTracking != AutoStartStopIMotionsTrackingAction.shouldBeTracking()) {
+                actionPerformed(e);  // trigger actual start/stop tracking action
+            }
+        }
+
+        final Application application = ApplicationManager.getApplication();
+        if (application != null) {
+            application.invokeLater(() -> {
+                application.runWriteAction(() -> {
+                    e.getPresentation().setText(isTracking ? "Stop Tracking" : "Start Tracking");
+                });
+            });
+        }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
     }
 
     /**
