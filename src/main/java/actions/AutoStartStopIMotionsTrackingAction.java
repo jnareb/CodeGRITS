@@ -2,10 +2,12 @@ package actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import org.jetbrains.annotations.NotNull;
 import trackers.EyeTracker;
 import utils.StimuliPresentationStatusWatcher;
+import utils.TcpCheck;
 
 import java.io.IOException;
 
@@ -77,12 +79,27 @@ public class AutoStartStopIMotionsTrackingAction extends DumbAwareToggleAction {
         isAutoTracking = state;
 
         if (isAutoTracking) {
-            try {
-                stimuliWatcher.start();
-            } catch (IOException ex) {
-                EyeTracker.createNotification("IOException from stimuliWatcher.start():\n<br>" + ex.getMessage());
-                isAutoTracking = false;
-            }
+            ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                boolean isServerStarted = TcpCheck.isServerAvailable("127.0.0.1", 8088, 500);
+                if (!isServerStarted) {
+                    EyeTracker.createNotification("it looks like the server is not started");
+                }
+                try {
+                    stimuliWatcher.start();
+                } catch (IOException ex) {
+                    EyeTracker.createNotification("IOException from stimuliWatcher.start():<br>\n" + ex.getMessage() +
+                            "<br>\n" + "turning off auto-tracking");
+                    isAutoTracking = false;
+                }
+                try {
+                    Thread.sleep(10000);
+                    EyeTracker.createNotification("slept with Thread.sleep()");
+                } catch (InterruptedException ex) {
+                    EyeTracker.createNotification("InterruptedException after Thread.sleep()");
+                } finally {
+                    EyeTracker.createNotification("after Thread.sleep()");
+                }
+            });
         } else {
             try {
                 stimuliWatcher.stop();
