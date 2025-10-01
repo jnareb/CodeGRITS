@@ -84,16 +84,18 @@ public class AutoStartStopIMotionsTrackingAction extends DumbAwareToggleAction {
                 if (!isServerStarted) {
                     EyeTracker.createNotification("it looks like the server is not started");
                 }
-                try {
-                    stimuliWatcher.start();
-                } catch (IOException ex) {
-                    EyeTracker.createNotification("IOException from stimuliWatcher.start():<br>\n" + ex.getMessage() +
-                            "<br>\n" + "turning off auto-tracking");
-                    isAutoTracking = false;
-                }
+                ApplicationManager.getApplication().runReadAction(() -> {
+                    try {
+                        stimuliWatcher.start();
+                    } catch (IOException ex) {
+                        EyeTracker.createNotification("IOException from stimuliWatcher.start():<br>\n" + ex.getMessage() +
+                                "<br>\n" + "turning off auto-tracking");
+                        isAutoTracking = false;
+                    }
+                });
                 try {
                     Thread.sleep(10000);
-                    EyeTracker.createNotification("slept with Thread.sleep()");
+                    EyeTracker.createNotification("slept 10000 ms with Thread.sleep()");
                 } catch (InterruptedException ex) {
                     EyeTracker.createNotification("InterruptedException after Thread.sleep()");
                 } finally {
