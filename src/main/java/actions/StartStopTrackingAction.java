@@ -62,67 +62,81 @@ public class StartStopTrackingAction extends AnAction {
      */
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-        if (!tryLoadConfig(e.getProject()))
+        final Project project = e.getProject();
+
+        if (!tryLoadConfigWithNotifications(project))
             return;
 
         try {
             if (!isTracking) {
                 if (isEyeTrackingSelected()) {
-                    if (!isEyeTrackingAvailable())
+                    if (!isEyeTrackingAvailableWithNotifications())
                         return;
                 }
 
-                isTracking = true;
-                ConfigAction.setIsEnabled(false);
-                AddLabelActionGroup.setIsEnabled(true);
-
-                String projectPath = e.getProject() != null ? e.getProject().getBasePath() : "";
-                String realDataOutputPath = Objects.equals(config.getDataOutputPath(), ConfigDialog.selectDataOutputPlaceHolder)
-                        ? projectPath : config.getDataOutputPath();
-                realDataOutputPath += "/" + System.currentTimeMillis() + "/";
-
-                if (isScreenRecordingSelected()) {
-                    screenRecorder.setDataOutputPath(realDataOutputPath);
-                    screenRecorder.startRecording();
-                }
-
-                iDETracker = IDETracker.getInstance();
-                iDETracker.setProjectPath(projectPath);
-                iDETracker.setDataOutputPath(realDataOutputPath);
-                iDETracker.startTracking(e.getProject());
-
-                if (isEyeTrackingSelected()) {
-                    eyeTracker = new EyeTracker();
-                    eyeTracker.setProjectPath(projectPath);
-                    eyeTracker.setDataOutputPath(realDataOutputPath);
-                    eyeTracker.setPythonInterpreter(config.getPythonInterpreter());
-                    eyeTracker.setSampleFrequency(config.getSampleFreq());
-                    eyeTracker.setDeviceIndex(config.getEyeTrackerDevice());
-                    eyeTracker.setPythonScriptTobii();
-                    eyeTracker.setPythonScriptMouse();
-                    eyeTracker.setPythonScriptIMotions();
-                    eyeTracker.startTracking(e.getProject());
-                }
+                startTracking(project);
 
             } else {
-                isTracking = false;
-                AddLabelAction.setIsEnabled(false);
-                ConfigAction.setIsEnabled(true);
-                iDETracker.stopTracking();
-                if (isEyeTrackingSelected() && eyeTracker != null) {
-                    eyeTracker.stopTracking();
-                }
-                if (isScreenRecordingSelected()) {
-                    screenRecorder.stopRecording();
-                }
-                eyeTracker = null;
+
+                stopTracking();
             }
         } catch (ParserConfigurationException | TransformerException | IOException | InterruptedException ex) {
             throw new RuntimeException(ex);
         }
     }
 
-    private boolean tryLoadConfig(Project project) {
+    private void startTracking(Project project) throws IOException, ParserConfigurationException {
+        isTracking = true;
+
+        ConfigAction.setIsEnabled(false);
+        AddLabelActionGroup.setIsEnabled(true);
+
+        String projectPath = project != null ? project.getBasePath() : "";
+        String realDataOutputPath = Objects.equals(config.getDataOutputPath(), ConfigDialog.selectDataOutputPlaceHolder)
+                ? projectPath : config.getDataOutputPath();
+        realDataOutputPath += "/" + System.currentTimeMillis() + "/";
+
+        if (isScreenRecordingSelected()) {
+            screenRecorder.setDataOutputPath(realDataOutputPath);
+            screenRecorder.startRecording();
+        }
+
+        iDETracker = IDETracker.getInstance();
+        iDETracker.setProjectPath(projectPath);
+        iDETracker.setDataOutputPath(realDataOutputPath);
+        iDETracker.startTracking(project);
+
+        if (isEyeTrackingSelected()) {
+            eyeTracker = new EyeTracker();
+            eyeTracker.setProjectPath(projectPath);
+            eyeTracker.setDataOutputPath(realDataOutputPath);
+            eyeTracker.setPythonInterpreter(config.getPythonInterpreter());
+            eyeTracker.setSampleFrequency(config.getSampleFreq());
+            eyeTracker.setDeviceIndex(config.getEyeTrackerDevice());
+            eyeTracker.setPythonScriptTobii();
+            eyeTracker.setPythonScriptMouse();
+            eyeTracker.setPythonScriptIMotions();
+            eyeTracker.startTracking(project);
+        }
+    }
+
+    private void stopTracking() throws TransformerException, IOException {
+        isTracking = false;
+
+        AddLabelAction.setIsEnabled(false);
+        ConfigAction.setIsEnabled(true);
+
+        iDETracker.stopTracking();
+        if (isEyeTrackingSelected() && eyeTracker != null) {
+            eyeTracker.stopTracking();
+        }
+        if (isScreenRecordingSelected()) {
+            screenRecorder.stopRecording();
+        }
+        eyeTracker = null;
+    }
+
+    private boolean tryLoadConfigWithNotifications(Project project) {
         if (config.configExists()) {
             config.loadFromJson();
             return true;
@@ -142,7 +156,7 @@ public class StartStopTrackingAction extends AnAction {
         return config.getCheckBoxes().get(2);
     }
 
-    private boolean isEyeTrackingAvailable() throws IOException, InterruptedException {
+    private boolean isEyeTrackingAvailableWithNotifications() throws IOException, InterruptedException {
         if (!AvailabilityChecker.checkPythonEnvironment(config.getPythonInterpreter())) {
             JOptionPane.showMessageDialog(null, "Python interpreter not found. Please configure the plugin first.");
             return false;
