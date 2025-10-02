@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareToggleAction;
+import com.intellij.openapi.project.Project;
 import entity.Config;
 import org.jetbrains.annotations.NotNull;
 import trackers.EyeTracker;
@@ -48,6 +49,7 @@ public class AutoStartStopIMotionsTrackingAction extends DumbAwareToggleAction {
      * This variable is the configuration.
      */
     Config config = new Config();
+    Project currentProject = null;
 
     /**
      * This variable represents an instance of {@link StimuliPresentationStatusWatcher} which is responsible
@@ -111,6 +113,7 @@ public class AutoStartStopIMotionsTrackingAction extends DumbAwareToggleAction {
      *     <li>Eye tracking is enabled</li>
      *     <li>iMotions Lab is used for eye-tracking</li>
      * </ol>
+     * It also automatically keeps `currentProject` up to date.
      *
      * @param e Carries information on the invocation place and data available
      */
@@ -130,6 +133,7 @@ public class AutoStartStopIMotionsTrackingAction extends DumbAwareToggleAction {
                 config.getEyeTrackerDevice() == EyeTracker.EYE_TRACKER_IMOTIONS
         );
 
+        currentProject = e.getProject();  // needed only if possibly enabled
         // no need for super.update(e), as the overridden method does nothing
     }
 
