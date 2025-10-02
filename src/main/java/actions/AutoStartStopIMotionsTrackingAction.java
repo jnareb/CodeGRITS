@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareToggleAction;
+import entity.Config;
 import org.jetbrains.annotations.NotNull;
 import trackers.EyeTracker;
 import utils.StimuliPresentationStatusWatcher;
@@ -42,6 +43,11 @@ public class AutoStartStopIMotionsTrackingAction extends DumbAwareToggleAction {
     public static boolean shouldBeTracking() {
         return shouldBeTracking;
     }
+
+    /**
+     * This variable is the configuration.
+     */
+    Config config = new Config();
 
     /**
      * This variable represents an instance of {@link StimuliPresentationStatusWatcher} which is responsible
@@ -85,7 +91,7 @@ public class AutoStartStopIMotionsTrackingAction extends DumbAwareToggleAction {
             });
 
     /**
-     * Returns the selected (checked, pressed) state of the action.
+     * Returns the selected (checked) state of the action.
      *
      * @param e the action event representing the place and context in which the selected state is queried.
      * @return true if the action is selected, false otherwise
@@ -93,6 +99,38 @@ public class AutoStartStopIMotionsTrackingAction extends DumbAwareToggleAction {
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
         return isAutoTracking;
+    }
+
+    /**
+     * Updates the state of the action.  In this case, enables or disables this action,
+     * depending on the CodeGRITS configuration.
+     * <p>
+     * The automatic start/stop of tracking should be enabled (available) only when:
+     * <ol>
+     *     <li>CodeGRITS is configured</li>
+     *     <li>Eye tracking is enabled</li>
+     *     <li>iMotions Lab is used for eye-tracking</li>
+     * </ol>
+     *
+     * @param e Carries information on the invocation place and data available
+     */
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+        // CodeGRITS must be (1) configured (2) to use eye-tracking (3) with iMotions
+        if (!config.configExists()) {
+            e.getPresentation().setEnabled(false);
+            return;
+        }
+        config.loadFromJson();   // should be fast enough for update()
+        if (config.getCheckBoxes() == null || !config.getCheckBoxes().get(1)) {
+            e.getPresentation().setEnabled(false);
+            return;
+        }
+        e.getPresentation().setEnabled(
+                config.getEyeTrackerDevice() == EyeTracker.EYE_TRACKER_IMOTIONS
+        );
+
+        // no need for super.update(e), as the overridden method does nothing
     }
 
     /**
