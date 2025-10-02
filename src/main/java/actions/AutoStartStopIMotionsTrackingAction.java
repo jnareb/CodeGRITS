@@ -1,5 +1,6 @@
 package actions;
 
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,6 +12,8 @@ import trackers.EyeTracker;
 import utils.StimuliPresentationStatusWatcher;
 import utils.TcpCheck;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
 import java.awt.*;
 import java.io.IOException;
 
@@ -72,14 +75,46 @@ public class AutoStartStopIMotionsTrackingAction extends DumbAwareToggleAction {
      */
     private final StimuliPresentationStatusWatcher stimuliWatcher =
             new StimuliPresentationStatusWatcher("127.0.0.1", 8088, s -> {
+                StartStopTrackingAction startStopTrackingAction =
+                        (StartStopTrackingAction) ActionManager.getInstance().getAction(StartStopTrackingAction.ACTION_ID);
                 switch (s) {
                     case "start":
-                        EyeTracker.createNotification("stimuliWatcher: Stimulus presentation started");
+                        EyeTracker.createNotification("stimuliWatcher: Stimulus presentation started<br>\n" +
+                                "startStopTrackingAction=" + startStopTrackingAction);
                         shouldBeTracking = true;
+                        if (
+                                startStopTrackingAction != null &&
+                                !StartStopTrackingAction.isTracking() &&
+                                currentProject != null
+                        ) {
+                            try {
+                                EyeTracker.createNotification("stimuliWatcher: Trying to start tracking...<br>\n" +
+                                        "currentProject.getName()=" + currentProject.getName());
+                                startStopTrackingAction.startTracking(currentProject);
+                            } catch (IOException | ParserConfigurationException ignored) {
+                                EyeTracker.createNotification("stimuliWatcher: FAILED to start tracking");
+                                shouldBeTracking = false;
+                                isAutoTracking = false;
+                            }
+                        }
                         break;
                     case "stop":
                         EyeTracker.createNotification("stimuliWatcher: Stimulus presentation stopped");
-                        shouldBeTracking = false;
+                        if (
+                                shouldBeTracking &&  // tracking was started by the "start" event
+                                startStopTrackingAction != null &&  // we can access the start/stop action
+                                StartStopTrackingAction.isTracking()  // the user did not turn off tracking
+                        ) {
+                            shouldBeTracking = false;
+                            try {
+                                EyeTracker.createNotification("stimuliWatcher: Trying to stop tracking...");
+                                startStopTrackingAction.stopTracking();
+                            } catch (IOException | TransformerException ignored) {
+                                EyeTracker.createNotification("stimuliWatcher: FAILED to stop tracking");
+                                shouldBeTracking = false;
+                                isAutoTracking = false;
+                            }
+                        }
                         break;
                     case "close":
                         EyeTracker.createNotification("stimuliWatcher: iMotions Lab server disconnected");
@@ -88,6 +123,11 @@ public class AutoStartStopIMotionsTrackingAction extends DumbAwareToggleAction {
                     case "failed":
                         EyeTracker.createNotification("stimuliWatcher: iMotions Lab server connection failed");
                         shouldBeTracking = false;
+                        break;
+                    case "data":
+                        break;
+                    default:
+                        EyeTracker.createNotification("stimuliWatcher: UNKNOWN event: " + s);
                         break;
                 }
             });
