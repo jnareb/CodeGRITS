@@ -25,6 +25,10 @@ import java.util.Objects;
 public class StartStopTrackingAction extends AnAction {
 
     /**
+     * The action ID. Must be the same as the ID in the plugin.xml file.
+     */
+    final public static String ACTION_ID = "CodeGRITS.StartStopTracking";
+    /**
      * This variable indicates whether the tracking is started.
      */
     private static boolean isTracking = false;
@@ -85,7 +89,7 @@ public class StartStopTrackingAction extends AnAction {
         }
     }
 
-    private void startTracking(Project project) throws IOException, ParserConfigurationException {
+    public void startTracking(Project project) throws IOException, ParserConfigurationException {
         isTracking = true;
 
         ConfigAction.setIsEnabled(false);
@@ -120,7 +124,7 @@ public class StartStopTrackingAction extends AnAction {
         }
     }
 
-    private void stopTracking() throws TransformerException, IOException {
+    public void stopTracking() throws TransformerException, IOException {
         isTracking = false;
 
         AddLabelAction.setIsEnabled(false);
