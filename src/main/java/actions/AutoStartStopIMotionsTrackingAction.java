@@ -134,7 +134,7 @@ public class AutoStartStopIMotionsTrackingAction extends DumbAwareToggleAction {
         );
 
         currentProject = e.getProject();  // needed only if possibly enabled
-        // no need for super.update(e), as the overridden method does nothing
+        super.update(e);  // from ToggleAction
     }
 
     /**
