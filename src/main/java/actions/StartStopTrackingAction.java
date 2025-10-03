@@ -140,7 +140,8 @@ public class StartStopTrackingAction extends AnAction {
         eyeTracker = null;
     }
 
-    private boolean tryLoadConfigWithNotifications(Project project) {
+    boolean tryLoadConfigWithNotifications(Project project) {
+        EyeTracker.createNotification("StartStopTrackingAction::tryLoadConfigWithNotifications(" + project + ") start...");
         if (config.configExists()) {
             config.loadFromJson();
             return true;
