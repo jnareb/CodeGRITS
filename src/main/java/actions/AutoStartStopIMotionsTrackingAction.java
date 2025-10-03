@@ -52,7 +52,18 @@ public class AutoStartStopIMotionsTrackingAction extends DumbAwareToggleAction {
      * This variable is the configuration.
      */
     Config config = new Config();
+    /**
+     * This variable is the current project.
+     * It is kept up to date in the `update()` method
+     * and used in `onEvent` parameter of the {@link StimuliPresentationStatusWatcher} constructor.
+     */
     Project currentProject = null;
+    /**
+     * This variable is the action for starting/stopping tracking.
+     * It is used to trigger tracking start/stop.
+     */
+    StartStopTrackingAction startStopTrackingAction =
+            (StartStopTrackingAction) ActionManager.getInstance().getAction(StartStopTrackingAction.ACTION_ID);
 
     /**
      * This variable represents an instance of {@link StimuliPresentationStatusWatcher} which is responsible
@@ -75,8 +86,12 @@ public class AutoStartStopIMotionsTrackingAction extends DumbAwareToggleAction {
      */
     private final StimuliPresentationStatusWatcher stimuliWatcher =
             new StimuliPresentationStatusWatcher("127.0.0.1", 8088, s -> {
-                StartStopTrackingAction startStopTrackingAction =
-                        (StartStopTrackingAction) ActionManager.getInstance().getAction(StartStopTrackingAction.ACTION_ID);
+                // just in case
+                if (startStopTrackingAction == null) {
+                    startStopTrackingAction =
+                            (StartStopTrackingAction) ActionManager.getInstance().getAction(StartStopTrackingAction.ACTION_ID);
+                }
+
                 switch (s) {
                     case "start":
                         EyeTracker.createNotification("stimuliWatcher: Stimulus presentation started<br>\n" +
