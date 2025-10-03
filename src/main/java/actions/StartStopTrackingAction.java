@@ -178,6 +178,10 @@ public class StartStopTrackingAction extends AnAction {
     }
 
     public static boolean isPaused() {
+        if (iDETracker == null) {
+            EyeTracker.createNotification("StartStopTrackingAction.isPaused() iDETracker is null");
+            return false;
+        }
         return !iDETracker.isTracking();
     }
 
