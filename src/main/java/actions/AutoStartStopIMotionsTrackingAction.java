@@ -204,6 +204,18 @@ public class AutoStartStopIMotionsTrackingAction extends DumbAwareToggleAction {
         isAutoTracking = state;
 
         if (isAutoTracking) {
+            // just in case (1)
+            if (startStopTrackingAction == null) {
+                startStopTrackingAction =
+                        (StartStopTrackingAction) ActionManager.getInstance().getAction(StartStopTrackingAction.ACTION_ID);
+            }
+            // just in case (2)
+            currentProject = e.getProject();
+            if (!startStopTrackingAction.tryLoadConfigWithNotifications(currentProject)) {
+                isAutoTracking = false;
+                return;
+            }
+
             ApplicationManager.getApplication().executeOnPooledThread(() -> {
                 boolean isServerStarted = TcpCheck.isServerAvailable("127.0.0.1", 8088, 500);
                 if (!isServerStarted) {
