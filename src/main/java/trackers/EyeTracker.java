@@ -187,17 +187,35 @@ public class EyeTracker implements Disposable {
      * @throws IOException The exception.
      */
     public void startTracking(Project project) throws IOException {
+        createNotification("EyeTracker::startTracking("+ project.getName() +") starting...");
+
         isTracking = true;
+        createNotification("EyeTracker::startTracking() getting psiDocumentManager...");
         psiDocumentManager = PsiDocumentManager.getInstance(project);
+        createNotification("EyeTracker::startTracking() getting editor...");
         editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+        createNotification("EyeTracker::startTracking() editor=" + editor);
         if (editor != null) {
+            createNotification("EyeTracker::startTracking() adding visibleAreaListener to editor...<br>\n" +
+                    "visibleAreaListener=" + visibleAreaListener);
             editor.getScrollingModel().addVisibleAreaListener(visibleAreaListener);
+            createNotification("EyeTracker::startTracking() getting visibleArea...");
+            createNotification("EyeTracker::startTracking() editor.getScrollingModel()=" + editor.getScrollingModel());
             visibleArea = editor.getScrollingModel().getVisibleArea();
+            createNotification("EyeTracker::startTracking() visibleArea=" + visibleArea);
         }
+        createNotification("EyeTracker::startTracking() getting virtualFiles...");
         VirtualFile[] virtualFiles = FileEditorManager.getInstance(project).getSelectedFiles();
         if (virtualFiles.length > 0) {
             filePath = virtualFiles[0].getPath();
         }
+        createNotification("EyeTracker::startTracking():<br>\n" +
+                "editor=" + editor + "<br>\n" +
+                "visibleArea=" + visibleArea + "<br>\n" +
+                "filePath=" + filePath + "<br>\n" +
+                "deviceIndex=" + deviceIndex +
+                "sampleFrequency=" + sampleFrequency + "<br>\n" +
+                " (mouse: " + EYE_TRACKER_MOUSE + ", tobii: " + EYE_TRACKER_TOBII + ", iMotions: " + EYE_TRACKER_IMOTIONS + ")");
         if (deviceIndex == EYE_TRACKER_MOUSE) {
             setting.setAttribute("eye_tracker", "Mouse");
         } else if (deviceIndex == EYE_TRACKER_TOBII) {
@@ -206,7 +224,10 @@ public class EyeTracker implements Disposable {
             setting.setAttribute("eye_tracker", "iMotions Events API");
         }
         setting.setAttribute("sample_frequency", String.valueOf(sampleFrequency));
+
+        createNotification("EyeTracker::startTracking("+ project.getName() +"): before track()");
         track();
+        createNotification("EyeTracker::startTracking("+ project.getName() +"): after track()");
     }
 
     /**

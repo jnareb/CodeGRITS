@@ -95,7 +95,9 @@ public class AutoStartStopIMotionsTrackingAction extends DumbAwareToggleAction {
                 switch (s) {
                     case "start":
                         EyeTracker.createNotification("stimuliWatcher: Stimulus presentation started<br>\n" +
-                                "startStopTrackingAction=" + startStopTrackingAction);
+                                "startStopTrackingAction=" + startStopTrackingAction + "<br>\n" +
+                                "startStopTracking action " + (startStopTrackingAction == null ? "is" : "is not") + " null<br>\n" +
+                                "StartStopTrackingAction.isTracking()=" + StartStopTrackingAction.isTracking());
                         shouldBeTracking = true;
                         if (
                                 startStopTrackingAction != null &&

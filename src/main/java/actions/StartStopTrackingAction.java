@@ -91,6 +91,7 @@ public class StartStopTrackingAction extends AnAction {
 
     public void startTracking(Project project) throws IOException, ParserConfigurationException {
         isTracking = true;
+        EyeTracker.createNotification("StartStopTrackingAction::startTracking(" + project + ") start...");
 
         ConfigAction.setIsEnabled(false);
         AddLabelActionGroup.setIsEnabled(true);
@@ -100,15 +101,28 @@ public class StartStopTrackingAction extends AnAction {
                 ? projectPath : config.getDataOutputPath();
         realDataOutputPath += "/" + System.currentTimeMillis() + "/";
 
+        EyeTracker.createNotification("StartStopTrackingAction::startTracking(): screenRecorder...<br>\n" +
+                "config=<br>\n" + config.toString());
+
         if (isScreenRecordingSelected()) {
             screenRecorder.setDataOutputPath(realDataOutputPath);
             screenRecorder.startRecording();
         }
 
+        EyeTracker.createNotification("StartStopTrackingAction::startTracking(): iDETracker...");
+
         iDETracker = IDETracker.getInstance();
         iDETracker.setProjectPath(projectPath);
         iDETracker.setDataOutputPath(realDataOutputPath);
         iDETracker.startTracking(project);
+
+        EyeTracker.createNotification("StartStopTrackingAction::startTracking(): EyeTracker...<br>\n" +
+                "projectPath=" + projectPath + "<br>\n" +
+                "realDataOutputPath=" + realDataOutputPath + "<br>\n" +
+                "pythonInterpreter: " + config.getPythonInterpreter() + "<br>\n" +
+                "sampleFrequency: " + config.getSampleFreq() + "<br>\n" +
+                "deviceIndex: " + config.getEyeTrackerDevice() + "<br>\n" +
+                "project=" + project + "<br>\n");
 
         if (isEyeTrackingSelected()) {
             eyeTracker = new EyeTracker();
@@ -122,6 +136,12 @@ public class StartStopTrackingAction extends AnAction {
             eyeTracker.setPythonScriptIMotions();
             eyeTracker.startTracking(project);
         }
+
+        EyeTracker.createNotification("StartStopTrackingAction::startTracking(" + project + ")<br>\n" +
+                "eyeTracker=" + eyeTracker + "<br>\n" +
+                "projectPath=" + projectPath + "<br>\n" +
+                "realDataOutputPath=" + realDataOutputPath + "<br>\n"
+        );
     }
 
     public void stopTracking() throws TransformerException, IOException {
