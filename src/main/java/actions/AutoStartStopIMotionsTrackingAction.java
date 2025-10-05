@@ -59,11 +59,17 @@ public class AutoStartStopIMotionsTrackingAction extends DumbAwareToggleAction {
      */
     Project currentProject = null;
     /**
+     * An event that triggered auto start/stop tracking on or off.
+     * To replace {@link AutoStartStopIMotionsTrackingAction#currentProject}.
+     */
+    AnActionEvent triggeringEvent = null;
+    /**
      * This variable is the action for starting/stopping tracking.
      * It is used to trigger tracking start/stop.
      */
     StartStopTrackingAction startStopTrackingAction =
             (StartStopTrackingAction) ActionManager.getInstance().getAction(StartStopTrackingAction.ACTION_ID);
+
 
     /**
      * This variable represents an instance of {@link StimuliPresentationStatusWatcher} which is responsible
@@ -102,17 +108,14 @@ public class AutoStartStopIMotionsTrackingAction extends DumbAwareToggleAction {
                         if (
                                 startStopTrackingAction != null &&
                                 !StartStopTrackingAction.isTracking() &&
-                                currentProject != null
+                                triggeringEvent != null
                         ) {
-                            try {
-                                EyeTracker.createNotification("stimuliWatcher: Trying to start tracking...<br>\n" +
-                                        "currentProject.getName()=" + currentProject.getName());
-                                startStopTrackingAction.startTracking(currentProject);
-                            } catch (IOException | ParserConfigurationException ignored) {
-                                EyeTracker.createNotification("stimuliWatcher: FAILED to start tracking");
-                                shouldBeTracking = false;
-                                isAutoTracking = false;
-                            }
+                            EyeTracker.createNotification("stimuliWatcher: Trying to start tracking with actionPerformed...<br>\n" +
+                                    "currentProject.getName()=" + currentProject.getName() + "<br>\n" +
+                                    "triggeringEvent=" + triggeringEvent);
+                            startStopTrackingAction.actionPerformed(triggeringEvent);
+                        } else {
+                            EyeTracker.createNotification("stimuliWatcher: Could not start tracking");
                         }
                         break;
                     case "stop":
@@ -123,14 +126,10 @@ public class AutoStartStopIMotionsTrackingAction extends DumbAwareToggleAction {
                                 StartStopTrackingAction.isTracking()  // the user did not turn off tracking
                         ) {
                             shouldBeTracking = false;
-                            try {
-                                EyeTracker.createNotification("stimuliWatcher: Trying to stop tracking...");
-                                startStopTrackingAction.stopTracking();
-                            } catch (IOException | TransformerException ignored) {
-                                EyeTracker.createNotification("stimuliWatcher: FAILED to stop tracking");
-                                shouldBeTracking = false;
-                                isAutoTracking = false;
-                            }
+
+                            EyeTracker.createNotification("stimuliWatcher: Trying to stop tracking with actionPerformed...<br>\n" +
+                                    "triggeringEvent=" + triggeringEvent);
+                            startStopTrackingAction.actionPerformed(triggeringEvent);
                         }
                         break;
                     case "close":
@@ -204,6 +203,9 @@ public class AutoStartStopIMotionsTrackingAction extends DumbAwareToggleAction {
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
         EyeTracker.createNotification(state ? "Auto tracking enabled" : "Auto tracking disabled");
         isAutoTracking = state;
+
+        // to be able to trigger starting the starting/stopping action
+        triggeringEvent = e;
 
         if (isAutoTracking) {
             // just in case (1)
