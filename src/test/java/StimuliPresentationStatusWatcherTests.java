@@ -70,13 +70,13 @@ class StimuliPresentationStatusWatcherTests {
 
         StimuliPresentationStatusWatcher client =
                 new StimuliPresentationStatusWatcher("127.0.0.1", port, events::add);
-        client.start();
+        client.startAsync();
 
         // Wait for the server to send and the client to process
         //TimeUnit.MILLISECONDS.sleep(totalSleepMs + 100);
         Thread.sleep(5*100);
 
-        client.stop();
+        client.stopAsync();
 
         // DEBUG
         //System.out.println("Events received: " + events);

@@ -12,8 +12,6 @@ import trackers.EyeTracker;
 import utils.StimuliPresentationStatusWatcher;
 import utils.TcpCheck;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerException;
 import java.awt.*;
 import java.io.IOException;
 
@@ -227,11 +225,11 @@ public class AutoStartStopIMotionsTrackingAction extends DumbAwareToggleAction {
                 }
                 EventQueue.invokeLater(new Thread(() -> {
                     try {
-                        EyeTracker.createNotification("stimuliWatcher.start() from new thread...");
+                        EyeTracker.createNotification("stimuliWatcher.startAsync() from new thread...");
                         shouldBeTracking = false;
-                        stimuliWatcher.start();
+                        stimuliWatcher.startAsync();
                     } catch (IOException ex) {
-                        EyeTracker.createNotification("IOException from stimuliWatcher.start():<br>\n" + ex.getMessage() +
+                        EyeTracker.createNotification("IOException from stimuliWatcher.startAsync():<br>\n" + ex.getMessage() +
                                 "<br>\n" + "turning off auto-tracking");
                         shouldBeTracking = false;
                         isAutoTracking = false;
@@ -248,9 +246,9 @@ public class AutoStartStopIMotionsTrackingAction extends DumbAwareToggleAction {
             });
         } else {
             try {
-                stimuliWatcher.stop();
+                stimuliWatcher.stopAsync();
             } catch (IOException ex) {
-                EyeTracker.createNotification("IOException from stimuliWatcher.stop():\n<br>" + ex.getMessage());
+                EyeTracker.createNotification("IOException from stimuliWatcher.stopAsync():\n<br>" + ex.getMessage());
             }
         }
     }

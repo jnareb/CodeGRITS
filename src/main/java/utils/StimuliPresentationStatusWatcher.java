@@ -40,7 +40,7 @@ public class StimuliPresentationStatusWatcher {
         this.onEvent = onEvent;
     }
 
-    public void start() throws IOException {
+    public void startAsync() throws IOException {
         channel = AsynchronousSocketChannel.open();
         InetSocketAddress hostAddress = new InetSocketAddress(host, port);
         Future<Void> connectFuture = channel.connect(hostAddress);
@@ -53,11 +53,11 @@ public class StimuliPresentationStatusWatcher {
         }
 
         // Begin an async read loop
-        readLoop();
+        readLoopAsync();
     }
 
     /** Close everything */
-    public void stop() throws IOException {
+    public void stopAsync() throws IOException {
         if (channel != null && channel.isOpen()) {
             try {
                 channel.close();
@@ -71,7 +71,7 @@ public class StimuliPresentationStatusWatcher {
         return in;
     }
 
-    private void readLoop() {
+    private void readLoopAsync() {
         ByteBuffer buffer = ByteBuffer.allocate(byteBufferSize);
 
         channel.read(buffer, buffer, new CompletionHandler<Integer, ByteBuffer>() {
